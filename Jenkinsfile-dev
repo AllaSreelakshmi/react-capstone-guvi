@@ -1,0 +1,55 @@
+pipeline {
+    agent any
+    stages {
+         stage('cleaning the os') {
+            steps {
+                sh 'docker rm -f $(docker ps -aq)'
+            }
+        }
+        
+        stage('clonoing to local repo') {
+            steps {
+                script {
+                    git branch: 'dev',
+                    url: 'https://github.com/AllaSreelakshmi/react-capstone-guvi.git'
+                }
+            }
+        }
+        
+        stage('Building image') {
+            steps {
+                script {
+                    sh 'chmod +x build.sh'
+                    sh './build.sh'
+                    
+                }
+            }
+        }
+        
+        stage('deploy') {
+            steps {
+                sh 'chmod +x deploy.sh'
+                sh './deploy.sh'
+                
+            }
+        }
+        
+        stage('pushing to dockerhub repo:dev') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-jenkins', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        sh "echo \$DOCKER_PASSWORD | docker login -u \$DOCKER_USERNAME --password-stdin docker.io"
+                        sh 'docker tag react-capstone $DOCKER_USERNAME/dev'
+                        sh 'docker push allasreelakshmi/dev'
+                        
+                }
+                  
+            }
+                
+        }
+    
+    }
+    
+}
+    
+    
+    
